@@ -30,4 +30,12 @@ app = FastAPI()
 app.add_route("/graphql", graphql_app)
 
 
+app = FastAPI()
+
+
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+
+
 
