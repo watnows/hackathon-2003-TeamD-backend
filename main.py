@@ -11,38 +11,53 @@ from fastapi.middleware.cors import CORSMiddleware
 import random
 
 
-
 load_dotenv()
 
-clint = MongoClient(os.environ['MONGO_URL'])
+client = MongoClient(os.environ["MONGO_URL"])
+db = client["RoomDB"]
 
 
-client_id = '49b607371e524745b0200c82ae283fba'
-client_secret = 'f8100708fd044216bf3dfd9cd4854558'
- 
-sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
+client_id = "49b607371e524745b0200c82ae283fba"
+client_secret = "f8100708fd044216bf3dfd9cd4854558"
 
- 
-    
+sp = spotipy.Spotify(
+    auth_manager=SpotifyClientCredentials(
+        client_id=client_id, client_secret=client_secret
+    )
+)
+
 
 # (2) User型を定義する
 @strawberry.type
 class User:
     name: str
     age: int
-    
+
 
 @strawberry.type
 class Song:
-    song_name : str
-    
-    
+    song_name: str
+
+
 @strawberry.type
 class Room:
-    user_id : int
-    name : str
+    room_id: int
+    user_id: list[int]
+    name: str
+
+
+@strawberry.input
+class CreateRoom:
+    user_id: int
+    room_name: str
+
+
+@strawberry.input
+class JoinRoom:
+    user_id: int
+    room_id: int
     
-    
+
 
 
 # (3) Query(データの読み込み)を行うクラスを定義する
@@ -51,35 +66,56 @@ class Query:
     @strawberry.field
     def user(self) -> User:
         return User(name="Shota", age=22)
-    
+
     @strawberry.field
-    def song(self, keyword:str) -> list[Song]:
+    def song(self, keyword: str) -> list[Song]:
         keyword_list = keyword.split(",")
-        
+
         songs = []
         for k in keyword_list:
-            results = sp.search(q=k, limit=10, market="JP",type='track')
-            for idx, track in enumerate(results['tracks']['items']):
-                songs.append(Song(song_name=str(track['name'])))
-        
-                
+            results = sp.search(q=k, limit=10, market="JP", type="track")
+            for idx, track in enumerate(results["tracks"]["items"]):
+                songs.append(Song(song_name=str(track["name"])))
+
         # ここでsongsをシャッフルする
         random.shuffle(songs)
-        
+
         return songs
-    
+
     @strawberry.field
     def room(self) -> Room:
-        return Room(user_id=1, name='部屋1')
+        return Room(user_id=1, name="部屋1")
 
+
+@strawberry.type
+class Mutation:
+    @strawberry.field
+    def create_room(self, room: CreateRoom) -> Room:
+        new_room = Room(
+            room_id=random.randint(1, 10000),
+            user_id=[room.user_id],
+            name=room.room_name,
+        )
+        collection = db["RoomTable"]
+        collection.insert_one(new_room.__dict__)
+        return new_room
+
+    @strawberry.field
+    def join_room(self, join: JoinRoom) -> Room:
+        collection = db["RoomTable"]
+        collection.update_one(
+            {"room_id": join.room_id}, {"$push": {"user_id": join.user_id}}
+        )
+        room = collection.find_one(filter={"room_id": join.room_id})
+        return Room(room_id=room["room_id"], user_id=room["user_id"], name=room["name"])
 
 
 # (4) スキーマを定義する
-schema = strawberry.Schema(query=Query)
+schema = strawberry.Schema(query=Query, mutation=Mutation)
 
 sdl = str(schema)
 
-with open("schema.graphql","w") as f:
+with open("schema.graphql", "w") as f:
     f.write(sdl)
 
 # (5) GraphQLエンドポイントを作成する
@@ -109,4 +145,3 @@ async def root():
 @app.get("/hello")
 async def root():
     return {"message": "Hello"}
-

@@ -1,3 +1,18 @@
+input CreateRoom {
+  userId: Int!
+  roomName: String!
+}
+
+input JoinRoom {
+  userId: Int!
+  roomId: Int!
+}
+
+type Mutation {
+  createRoom(room: CreateRoom!): Room!
+  joinRoom(join: JoinRoom!): Room!
+}
+
 type Query {
   user: User!
   song(keyword: String!): [Song!]!
@@ -5,7 +20,8 @@ type Query {
 }
 
 type Room {
-  userId: Int!
+  roomId: Int!
+  userId: [Int!]!
   name: String!
 }
 
