@@ -11,12 +11,25 @@ input JoinRoom {
 type Mutation {
   createRoom(room: CreateRoom!): Room!
   joinRoom(join: JoinRoom!): Room!
+  register(regist: Register!): RegisterComplete!
 }
 
 type Query {
   user: User!
   song(keyword: String!): [Song!]!
   room: Room!
+}
+
+input Register {
+  userId: Int!
+  genre: [String!]!
+  age: [String!]!
+}
+
+type RegisterComplete {
+  userId: Int!
+  genre: [String!]!
+  age: [String!]!
 }
 
 type Room {

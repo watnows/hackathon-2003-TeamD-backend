@@ -44,6 +44,13 @@ class Room:
     room_id: int
     user_id: list[int]
     name: str
+    
+
+@strawberry.type
+class RegisterComplete:
+    user_id : int
+    genre : list[str]
+    age : list[str]
 
 
 @strawberry.input
@@ -56,6 +63,17 @@ class CreateRoom:
 class JoinRoom:
     user_id: int
     room_id: int
+    
+@strawberry.input
+class Register:
+    user_id : int
+    genre : list[str]
+    age : list[str]
+    
+
+    
+    
+    
     
 
 
@@ -108,6 +126,12 @@ class Mutation:
         )
         room = collection.find_one(filter={"room_id": join.room_id})
         return Room(room_id=room["room_id"], user_id=room["user_id"], name=room["name"])
+    
+    @strawberry.field
+    def register(self, regist:Register) -> RegisterComplete:
+        collection = db["UserTable"]
+        collection.insert_one(regist.__dict__)
+        return regist
 
 
 # (4) スキーマを定義する
