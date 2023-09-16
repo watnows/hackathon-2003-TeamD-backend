@@ -8,12 +8,23 @@ import strawberry
 from fastapi import FastAPI
 from strawberry.asgi import GraphQL
 from fastapi.middleware.cors import CORSMiddleware
+import random
 
 
 
 load_dotenv()
 
 clint = MongoClient(os.environ['MONGO_URL'])
+
+
+client_id = '49b607371e524745b0200c82ae283fba'
+client_secret = 'f8100708fd044216bf3dfd9cd4854558'
+ 
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
+
+ 
+    
+
 # (2) User型を定義する
 @strawberry.type
 class User:
@@ -24,13 +35,13 @@ class User:
 @strawberry.type
 class Song:
     song_name : str
-    song_genre : str
     
-
+    
 @strawberry.type
 class Room:
     user_id : int
     name : str
+    
     
 
 
@@ -42,8 +53,20 @@ class Query:
         return User(name="Shota", age=22)
     
     @strawberry.field
-    def song(self) -> Song:
-        return Song(song_name='aaa', song_genre='bbbb')
+    def song(self, keyword:str) -> list[Song]:
+        keyword_list = keyword.split(",")
+        
+        songs = []
+        for k in keyword_list:
+            results = sp.search(q=k, limit=10, market="JP",type='track')
+            for idx, track in enumerate(results['tracks']['items']):
+                songs.append(Song(song_name=str(track['name'])))
+        
+                
+        # ここでsongsをシャッフルする
+        random.shuffle(songs)
+        
+        return songs
     
     @strawberry.field
     def room(self) -> Room:
@@ -53,6 +76,11 @@ class Query:
 
 # (4) スキーマを定義する
 schema = strawberry.Schema(query=Query)
+
+sdl = str(schema)
+
+with open("schema.graphql","w") as f:
+    f.write(sdl)
 
 # (5) GraphQLエンドポイントを作成する
 graphql_app = GraphQL(schema)
@@ -82,13 +110,3 @@ async def root():
 async def root():
     return {"message": "Hello"}
 
-client_id = '49b607371e524745b0200c82ae283fba'
-client_secret = 'f8100708fd044216bf3dfd9cd4854558'
- 
-sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
- 
-keyword = 'よあそび'
- 
-results = sp.search(q=keyword, limit=10, market="JP")
-for idx, track in enumerate(results['tracks']['items']):
-    print(idx + 1, track['name'])

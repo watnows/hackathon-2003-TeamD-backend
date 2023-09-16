@@ -1,0 +1,19 @@
+type Query {
+  user: User!
+  song(keyword: String!): [Song!]!
+  room: Room!
+}
+
+type Room {
+  userId: Int!
+  name: String!
+}
+
+type Song {
+  songName: String!
+}
+
+type User {
+  name: String!
+  age: Int!
+}
