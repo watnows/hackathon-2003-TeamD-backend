@@ -69,22 +69,11 @@ class Register:
     user_id : int
     genre : list[str]
     age : list[str]
-    
-
-    
-    
-    
-    
-
 
 
 # (3) Query(データの読み込み)を行うクラスを定義する
 @strawberry.type
 class Query:
-    @strawberry.field
-    def user(self) -> User:
-        return User(name="Shota", age=22)
-
     @strawberry.field
     def song(self, keyword: str) -> list[Song]:
         keyword_list = keyword.split(",")
@@ -97,12 +86,7 @@ class Query:
 
         # ここでsongsをシャッフルする
         random.shuffle(songs)
-
         return songs
-
-    @strawberry.field
-    def room(self) -> Room:
-        return Room(user_id=1, name="部屋1")
 
 
 @strawberry.type
@@ -127,6 +111,7 @@ class Mutation:
         room = collection.find_one(filter={"room_id": join.room_id})
         return Room(room_id=room["room_id"], user_id=room["user_id"], name=room["name"])
     
+    #ユーザ情報登録
     @strawberry.field
     def register(self, regist:Register) -> RegisterComplete:
         collection = db["UserTable"]
