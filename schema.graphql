@@ -15,19 +15,17 @@ type Mutation {
 }
 
 type Query {
-  song(keyword: String!): [Song!]!
+  song(roomId: Int!): [Song!]!
 }
 
 input Register {
   userId: Int!
-  genre: [String!]!
-  age: [String!]!
+  categories: [String!]!
 }
 
 type RegisterComplete {
   userId: Int!
-  genre: [String!]!
-  age: [String!]!
+  categories: [String!]!
 }
 
 type Room {
@@ -38,5 +36,5 @@ type Room {
 
 type Song {
   songName: String!
-  category: [String!]!
+  categories: [String!]!
 }

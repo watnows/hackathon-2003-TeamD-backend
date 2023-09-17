@@ -39,7 +39,7 @@ class User:
 @strawberry.type
 class Song:
     song_name: str
-    category : List[str]
+    categories : List[str]
 
 
 @strawberry.type
@@ -52,11 +52,11 @@ class Room:
 @strawberry.type
 class RegisterComplete:
     user_id : int
-    genre : List[str]
-    age : List[str]
+    categories : List[str]
 
 
 @strawberry.input
+#ユーザIDはフロントエンドで入力する
 class CreateRoom:
     user_id: int
     room_name: str
@@ -64,34 +64,46 @@ class CreateRoom:
 
 @strawberry.input
 class JoinRoom:
+    #ユーザIDはフロントエンドで入力
     user_id: int
     room_id: int
     
 @strawberry.input
 class Register:
+    #ここのユーザIDはJOINまたはCREATEでフロントからもらったIDを入力する
     user_id : int
-    genre : List[str]
-    age : List[str]
+    categories : List[str]
 
 
 # (3) Query(データの読み込み)を行うクラスを定義する
 @strawberry.type
 class Query:
     @strawberry.field
-    def song(self, keyword: str) -> List[Song]:
+    def song(self, room_id: int) -> List[Song]:
+        room = db["RoomTable"].find_one({'room_id':room_id})
+        print(room)
+        menber_categories_list = []
+        
+        user_ids = room["user_id"]
+        
+        for user_id in user_ids:
+            user = db["UserTable"].find_one({"user_id":user_id})
+            categories = user["categories"]
+            for c in categories:
+                menber_categories_list.append(c)
+            
         #引数のkeywordは roomIDに変える
         
         #roomIDからみんなの好きなカテゴリーを取得する
         # mongodb で　roomIDでroomTableを検索するとroomにいる人のuserIDがわかる
         
         # mongodb　で userIDでuserTableを検索すると、そのユーザの好きなカテゴリーがわかる(これは、userIDが配列であるのでその数だけ検索する)
-        
+
         # mongodbから全員の好きなカテゴリーがしゅとくできたので、それをkeyword_listに代入
-        keyword_list = keyword.split(",")
 
         song_categories = defaultdict(set)  # 同じ曲に関連付けられたカテゴリを保存するためのディクショナリ
 
-        for k in keyword_list:
+        for k in menber_categories_list:
             results = sp.search(q=k, limit=3, market="JP", type="playlist")
 
             for idx, playlist in enumerate(results["playlists"]["items"]):
@@ -104,10 +116,10 @@ class Query:
                     song_categories[name].add(k)  # 曲に関連付けられたカテゴリのセットにkを追加
 
         #カテゴリ情報に基づいてSongオブジェクトのリストを作成
-        songs = [Song(song_name=name, category=list(song_categories[name])) for name in song_categories.keys()]
+        songs = [Song(song_name=name, categories=list(song_categories[name])) for name in song_categories.keys()]
 
         #カテゴリの数に基づいてリストをソート
-        songs.sort(key=lambda x: len(x.category), reverse=True)
+        songs.sort(key=lambda x: len(x.categories), reverse=True)
                 
         return songs
 
