@@ -87,8 +87,11 @@ class Query:
         user_ids = room["user_id"]
         
         for user_id in user_ids:
-            user = db["UserTable"].find_one({"user_id":user_id})
-            categories = user["categories"]
+            try:
+                user = db["UserTable"].find_one({"user_id":user_id})
+                categories = user["categories"]
+            except TypeError:
+                continue
             for c in categories:
                 menber_categories_list.append(c)
             
