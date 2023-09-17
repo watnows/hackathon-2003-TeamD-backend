@@ -1,5 +1,6 @@
 # (1) 必要なライブラリをインポートする
 import os
+import requests
 from pymongo import MongoClient
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
