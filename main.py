@@ -76,7 +76,7 @@ class Register:
 @strawberry.type
 class Query:
     @strawberry.field
-    def song(self, keyword: str) -> list[Song]:
+    def song(self, keyword: str) -> List[Song]:
         keyword_list = keyword.split(",")
 
         songs = []
