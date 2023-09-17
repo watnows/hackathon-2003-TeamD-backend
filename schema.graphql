@@ -38,4 +38,5 @@ type Room {
 
 type Song {
   songName: String!
+  category: [String!]!
 }

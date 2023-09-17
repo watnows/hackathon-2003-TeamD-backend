@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from strawberry.asgi import GraphQL
 from fastapi.middleware.cors import CORSMiddleware
 import random
+from collections import defaultdict
 
 
 load_dotenv()
@@ -38,6 +39,7 @@ class User:
 @strawberry.type
 class Song:
     song_name: str
+    category : List[str]
 
 
 @strawberry.type
@@ -77,16 +79,36 @@ class Register:
 class Query:
     @strawberry.field
     def song(self, keyword: str) -> List[Song]:
+        #引数のkeywordは roomIDに変える
+        
+        #roomIDからみんなの好きなカテゴリーを取得する
+        # mongodb で　roomIDでroomTableを検索するとroomにいる人のuserIDがわかる
+        
+        # mongodb　で userIDでuserTableを検索すると、そのユーザの好きなカテゴリーがわかる(これは、userIDが配列であるのでその数だけ検索する)
+        
+        # mongodbから全員の好きなカテゴリーがしゅとくできたので、それをkeyword_listに代入
         keyword_list = keyword.split(",")
 
-        songs = []
-        for k in keyword_list:
-            results = sp.search(q=k, limit=10, market="JP", type="track")
-            for idx, track in enumerate(results["tracks"]["items"]):
-                songs.append(Song(song_name=str(track["name"])))
+        song_categories = defaultdict(set)  # 同じ曲に関連付けられたカテゴリを保存するためのディクショナリ
 
-        # ここでsongsをシャッフルする
-        random.shuffle(songs)
+        for k in keyword_list:
+            results = sp.search(q=k, limit=3, market="JP", type="playlist")
+
+            for idx, playlist in enumerate(results["playlists"]["items"]):
+                playlisturl = str(playlist["href"]).split("/")
+                playlistID = playlisturl[len(playlisturl)-1]
+                playListTrack = sp.playlist(playlist_id=playlistID, market="JP")
+
+                for i, track in enumerate(playListTrack["tracks"]["items"]):
+                    name = track["track"]["name"]
+                    song_categories[name].add(k)  # 曲に関連付けられたカテゴリのセットにkを追加
+
+        #カテゴリ情報に基づいてSongオブジェクトのリストを作成
+        songs = [Song(song_name=name, category=list(song_categories[name])) for name in song_categories.keys()]
+
+        #カテゴリの数に基づいてリストをソート
+        songs.sort(key=lambda x: len(x.category), reverse=True)
+                
         return songs
 
 
