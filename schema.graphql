@@ -15,9 +15,7 @@ type Mutation {
 }
 
 type Query {
-  user: User!
   song(keyword: String!): [Song!]!
-  room: Room!
 }
 
 input Register {
@@ -40,9 +38,4 @@ type Room {
 
 type Song {
   songName: String!
-}
-
-type User {
-  name: String!
-  age: Int!
 }
