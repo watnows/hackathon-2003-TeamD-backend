@@ -1,6 +1,7 @@
 # (1) 必要なライブラリをインポートする
 import os
 from pymongo import MongoClient
+from typing import List
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from dotenv import load_dotenv
@@ -42,15 +43,15 @@ class Song:
 @strawberry.type
 class Room:
     room_id: int
-    user_id: list[int]
+    user_id: List[int]
     name: str
     
 
 @strawberry.type
 class RegisterComplete:
     user_id : int
-    genre : list[str]
-    age : list[str]
+    genre : List[str]
+    age : List[str]
 
 
 @strawberry.input
@@ -67,8 +68,8 @@ class JoinRoom:
 @strawberry.input
 class Register:
     user_id : int
-    genre : list[str]
-    age : list[str]
+    genre : List[str]
+    age : List[str]
 
 
 # (3) Query(データの読み込み)を行うクラスを定義する
