@@ -104,7 +104,7 @@ class Query:
         song_categories = defaultdict(set)  # 同じ曲に関連付けられたカテゴリを保存するためのディクショナリ
 
         for k in menber_categories_list:
-            results = sp.search(q=k, limit=3, market="JP", type="playlist")
+            results = sp.search(q=k, limit=2, market="JP", type="playlist")
 
             for idx, playlist in enumerate(results["playlists"]["items"]):
                 playlisturl = str(playlist["href"]).split("/")
@@ -120,8 +120,9 @@ class Query:
 
         #カテゴリの数に基づいてリストをソート
         songs.sort(key=lambda x: len(x.categories), reverse=True)
+        sliced_song = songs[:30]
                 
-        return songs
+        return sliced_song
 
 
 @strawberry.type
