@@ -1,4 +1,3 @@
-# (1) 必要なライブラリをインポートする
 import os
 from pymongo import MongoClient
 from typing import List
@@ -29,7 +28,6 @@ sp = spotipy.Spotify(
 )
 
 
-# (2) User型を定義する
 @strawberry.type
 class User:
     name: str
@@ -56,7 +54,6 @@ class RegisterComplete:
 
 
 @strawberry.input
-#ユーザIDはフロントエンドで入力する
 class CreateRoom:
     user_id: int
     room_name: str
@@ -64,18 +61,15 @@ class CreateRoom:
 
 @strawberry.input
 class JoinRoom:
-    #ユーザIDはフロントエンドで入力
     user_id: int
     room_id: int
     
 @strawberry.input
 class Register:
-    #ここのユーザIDはJOINまたはCREATEでフロントからもらったIDを入力する
     user_id : int
     categories : List[str]
 
 
-# (3) Query(データの読み込み)を行うクラスを定義する
 @strawberry.type
 class Query:
     @strawberry.field
@@ -95,33 +89,25 @@ class Query:
             for c in categories:
                 menber_categories_list.append(c)
             
-        #引数のkeywordは roomIDに変える
-        
-        #roomIDからみんなの好きなカテゴリーを取得する
-        # mongodb で　roomIDでroomTableを検索するとroomにいる人のuserIDがわかる
-        
-        # mongodb　で userIDでuserTableを検索すると、そのユーザの好きなカテゴリーがわかる(これは、userIDが配列であるのでその数だけ検索する)
 
-        # mongodbから全員の好きなカテゴリーがしゅとくできたので、それをkeyword_listに代入
-
-        song_categories = defaultdict(set)  # 同じ曲に関連付けられたカテゴリを保存するためのディクショナリ
+        song_categories = defaultdict(set)  
 
         for k in menber_categories_list:
             results = sp.search(q=k, limit=3, market="JP", type="playlist")
 
             for idx, playlist in enumerate(results["playlists"]["items"]):
                 playlisturl = str(playlist["href"]).split("/")
+                # URLの最後の要素が欲しいので分割
                 playlistID = playlisturl[len(playlisturl)-1]
+                # URLの最後の部分がプレイリストID
                 playListTrack = sp.playlist(playlist_id=playlistID, market="JP")
 
                 for i, track in enumerate(playListTrack["tracks"]["items"]):
                     name = track["track"]["name"]
-                    song_categories[name].add(k)  # 曲に関連付けられたカテゴリのセットにkを追加
+                    song_categories[name].add(k)  
 
-        #カテゴリ情報に基づいてSongオブジェクトのリストを作成
         songs = [Song(song_name=name, categories=list(song_categories[name])) for name in song_categories.keys()]
 
-        #カテゴリの数に基づいてリストをソート
         songs.sort(key=lambda x: len(x.categories), reverse=True)
         sliced_song = songs[:30]
                 
@@ -150,7 +136,7 @@ class Mutation:
         room = collection.find_one(filter={"room_id": join.room_id})
         return Room(room_id=room["room_id"], user_id=room["user_id"], name=room["name"])
     
-    #ユーザ情報登録
+
     @strawberry.field
     def register(self, regist:Register) -> RegisterComplete:
         collection = db["UserTable"]
@@ -158,7 +144,7 @@ class Mutation:
         return regist
 
 
-# (4) スキーマを定義する
+
 schema = strawberry.Schema(query=Query, mutation=Mutation)
 
 sdl = str(schema)
@@ -166,22 +152,19 @@ sdl = str(schema)
 with open("schema.graphql", "w") as f:
     f.write(sdl)
 
-# (5) GraphQLエンドポイントを作成する
 graphql_app = GraphQL(schema)
 
-# (6) FastAPIアプリのインスタンスを作る
 app = FastAPI()
 
 
-# (7) /graphqlでGraphQL APIへアクセスできるようにし、適切なレスポンスを出力
 app.add_route("/graphql", graphql_app)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 許可するオリジンを指定。安全な設定に注意してください。
+    allow_origins=["*"],  
     allow_credentials=True,
-    allow_methods=["*"],  # 許可するHTTPメソッドを指定。必要に応じて調整してください。
-    allow_headers=["*"],  # 許可するHTTPヘッダーを指定。必要に応じて調整してください。
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
 
 
