@@ -18,8 +18,8 @@ client = MongoClient(os.environ["MONGO_URL"])
 db = client["RoomDB"]
 
 
-client_id = "49b607371e524745b0200c82ae283fba"
-client_secret = "f8100708fd044216bf3dfd9cd4854558"
+client_id = os.getenv("CLIENT_ID")
+client_secret = os.getenv("CLIENT_SECRET")
 
 sp = spotipy.Spotify(
     auth_manager=SpotifyClientCredentials(
